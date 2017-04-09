@@ -137,8 +137,6 @@ void redrawPanels() {
   for(int panel = 0; panel < PANELS-1; panel++) {
     // panel select high
     PORTB |= (1<<panelSelect[panel]);
-    // bright for panel high
-    PORTD |= (1<<PIN_BRIGHT);
     
     // pixel data
     for(int col = 0; col < COLS-1; col++) {
@@ -161,9 +159,8 @@ void redrawPanels() {
       }
     }
 
-    // panel select+bright low
+    // panel select low
     PORTB &= ~(1<<panelSelect[panel]);
-    PORTD &= ~(1<<PIN_BRIGHT);
   }
 }
 

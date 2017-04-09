@@ -1,0 +1,18 @@
+4x panels:
+- vcc
+- gnd
+- clock
+- reset
+- bright
+- red
+- green
+
+4x column:
+- select
+
+http://www.mikrocontroller.net/topic/157645
+
+http://harbaum.org/till/ledmatrix/index.html
+
+http://playground.arduino.cc/Main/DirectDriveLEDMatrix
+http://www.marwedels.de/malte/ledmatrix/ledmatrix.html

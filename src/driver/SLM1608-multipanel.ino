@@ -1,29 +1,52 @@
-//20 - 2 - brtclk
-//25 - 3 - brtwrt (always high)
-//30 - 4 - select (always high after reset)
-//35 - 5 - red
-//40 - 6 - green
-//45 - 7 - clock
-//50 - 8 - bright
-//55 - 9 - reset
-
-// 1: 30 select
-// 2: 55 reset
-// 3: 45 clock
-// 4: 50 bright
 #include "TimerOne.h"
 
+// -----------------------------------------------------------------------------
+// PORTD: Data Bus
+// Digital  0 = PORTD 0
+// reserved for serial
+
+// Digital  1 = PORTD 1
+// reserved for serial
+
+// Digital  2 = PORTD 2
 #define PIN_RED 2
+
+// Digital  3 = PORTD 3
 #define PIN_GREEN 3
+
+// Digital  4 = PORTD 4
+#define PIN_BLUE 4
+
+// Digital  5 = PORTD 5
 #define PIN_CLOCK 5
+
+// Digital  6 = PORTD 6
 #define PIN_BRIGHT 6
+
+// Digital  7 = PORTD 7
 #define PIN_RESET 7
 
-#define PIN_SELECT1 8
-#define PIN_SELECT2 9
-#define PIN_SELECT3 10
-#define PIN_SELECT4 11
+// -----------------------------------------------------------------------------
+// PORTB: Select lines
+// Digital  8 = PORTB 0
+#define PIN_SELECT1 0
 
+// Digital  9 = PORTB 1
+#define PIN_SELECT2 1
+
+// Digital 10 = PORTB 2
+#define PIN_SELECT3 2
+
+// Digital 11 = PORTB 3
+#define PIN_SELECT4 3
+
+// Digital 12 = PORTB 4
+// not used
+
+// Digital 13 = PORTB 5
+// not used
+
+// -----------------------------------------------------------------------------
 #define ROWS 16 
 #define COLS 16
 #define PANELS 4
@@ -61,67 +84,86 @@ int panelOffset = 0;
 int colOffset = 0;
 int pixelCounter = 0;
 
+//x |= (1 << n);       // forces nth bit of x to be 1.  all other bits left alone.
+//x &= ~(1 << n);      // forces nth bit of x to be 0.  all other bits left alone.
+
 void setup() {
+  initializeFramebuffer();
+  initializePins();
+  resetPins();
+  initializePanels();
+  //setupTimer();
+  //setupSerial();
+}
+
+void initializeFramebuffer() {
   for(int i = 0; i < 1024; i++) {
-    framebuffer[i] = 0x03;
+    framebuffer[i] = 0x02;
   }
-  
-  pinMode(PIN_RED, OUTPUT);
-  pinMode(PIN_GREEN, OUTPUT);
-  pinMode(PIN_CLOCK, OUTPUT);
-  pinMode(PIN_BRIGHT, OUTPUT);
-  pinMode(PIN_RESET, OUTPUT);
-  pinMode(PIN_SELECT1, OUTPUT);
-  pinMode(PIN_SELECT2, OUTPUT);
-  pinMode(PIN_SELECT3, OUTPUT);
-  pinMode(PIN_SELECT4, OUTPUT);
+}
 
-  digitalWrite(PIN_RED, LOW);
-  digitalWrite(PIN_GREEN, LOW);
-  digitalWrite(PIN_CLOCK, LOW);
-  digitalWrite(PIN_BRIGHT, LOW);  
-  digitalWrite(PIN_RESET, LOW);
-  digitalWrite(PIN_SELECT1, LOW);
-  digitalWrite(PIN_SELECT2, LOW);
-  digitalWrite(PIN_SELECT3, LOW);
-  digitalWrite(PIN_SELECT4, LOW);
+void initializePins() {
+  DDRD |= ((1<<PIN_RED) | (1<<PIN_GREEN) | (1<<PIN_CLOCK) | (1<<PIN_BRIGHT) | (1<<PIN_RESET));
+  DDRB |= ((1<<PIN_SELECT1) | (1<<PIN_SELECT2) | (1<<PIN_SELECT3) | (1<<PIN_SELECT4));
+}
 
-  digitalWrite(PIN_RESET, HIGH);
-  digitalWrite(PIN_BRIGHT, HIGH);
-  digitalWrite(PIN_RESET, LOW);
-  digitalWrite(PIN_BRIGHT, LOW);
-  
+void resetPins() {
+  PORTD = B00000000;
+  PORTB = B00000000;
+}
+
+void initializePanels() {
+  // reset and bright: high
+  PORTD |= ((1<<PIN_RESET) | (1<<PIN_BRIGHT));
+  // reset and bright: low
+  PORTD &= ~((1<<PIN_RESET) | (1<<PIN_BRIGHT));
+}
+
+void setupTimer() {
   // 30fps
-  //Timer1.initialize(33333);
-  //Timer1.attachInterrupt(updateDisplay);
-  
+  Timer1.initialize(33333);
+  Timer1.attachInterrupt(redrawPanels);
+}
+
+void setupSerial() {
+  // asd
   Serial.begin(38400);
 }
 
-
-//TODO debug updateDisplay
+//TODO debug redrawPanels
 // IO pins auf high/low setyen und ueber oszi messen
-void updateDisplay() {
+void redrawPanels() {
   // write each panel sequentially
   for(int panel = 0; panel < PANELS-1; panel++) {
-    digitalWrite(panelSelect[panel], HIGH);
-    digitalWrite(PIN_BRIGHT, HIGH);
+    // panel select high
+    PORTB |= (1<<panelSelect[panel]);
+    // bright for panel high
+    PORTD |= (1<<PIN_BRIGHT);
     
-    // write individual panel data
-    for(int row = 0; row < ROWS-1; row++) {
-      for(int col = 0; col < COLS-1; col++) {
+    // pixel data
+    for(int col = 0; col < COLS-1; col++) {
+      for(int row = 0; row < ROWS-1; row++) {
         rowOffset = row*(PANELS*COLS);
         panelOffset = panel*COLS;
         colOffset = rowOffset + panelOffset + col;
-        digitalWrite(PIN_GREEN, framebuffer[colOffset] & 0x01 ? HIGH : LOW);
-        digitalWrite(PIN_RED, framebuffer[colOffset] & 0x02 ? HIGH : LOW);
-        digitalWrite(PIN_CLOCK, HIGH);
-        digitalWrite(PIN_CLOCK, LOW);
+
+        PORTD &= ~((1 << PIN_RED) | (1 << PIN_GREEN));
+        if(framebuffer[colOffset] & 0x01) {
+          PORTD |= (1<<PIN_GREEN);
+        }
+        if(framebuffer[colOffset] & 0x02) {
+          PORTD |= (1<<PIN_RED);
+        }
+
+        // clock high, then low
+        PORTD |= (1<<PIN_CLOCK);
+        PORTD &= ~(1<<PIN_CLOCK);
       }
     }
 
-    digitalWrite(panelSelect[panel], LOW);
-    digitalWrite(PIN_BRIGHT, LOW);
+    // panel select+bright low
+    PORTB &= ~(1<<panelSelect[panel]);
+    PORTD &= ~(1<<PIN_BRIGHT);
   }
 }
 
@@ -133,5 +175,5 @@ void loop() {
   //    pixelCounter = 0;
   //  }
   //}
-  updateDisplay();
+  redrawPanels();
 }

@@ -114,7 +114,7 @@ void initializePanels() {
 
 void setupTimer() {
   // 30fps
-  Timer1.initialize(33333);
+  Timer1.initialize((1/30)*1000000);
   Timer1.attachInterrupt(redrawPanels);
 }
 

@@ -95,7 +95,7 @@ void setup() {
   initializePanels();
   redrawPanels();
   //setupTimer();
-  //setupSerial();
+  setupSerial();
 }
 
 void initializePins() {
@@ -119,8 +119,8 @@ void setupTimer() {
 }
 
 void setupSerial() {
-  // asd
-  Serial.begin(38400);
+  Serial.begin(115200);
+  Serial.println("Ready");
 }
 
 void redrawPanels() {
@@ -160,12 +160,47 @@ void redrawPanel(int panel) {
 }
 
 void loop() {
-  // update framebuffer via serial console
-  //if (Serial.available() > 0) {
-  //  framebuffer[pixelCounter++] = Serial.read();
-  //  if(pixelCounter >= 1024) {
-  //    pixelCounter = 0;
-  //  }
-  //}
+  if(Serial.available()) {
+    updateFramebufferFromSerial();
+  }
   redrawPanels();
+}
+
+void updateFramebufferFromSerial() {
+  char inByte = Serial.read();
+  switch(inByte) {
+    case 'i':
+      reset();
+      Serial.print("reset");
+      break;
+    case 'o':
+      update(0x00);
+      break;
+    case 'g':
+      update(0x01);
+      break;
+    case 'r':
+      update(0x02);
+      break;
+    case 'y':
+      update(0x03);
+      break;
+    default:
+      break;
+  }
+}
+
+void reset() {
+  pixelCounter = 0;
+  for(int i = 0; i < 1024; i++) {
+    framebuffer[i] = 0;
+  }
+}
+
+void update(byte value) {
+    framebuffer[pixelCounter] = value;
+    pixelCounter++;
+    if(pixelCounter >= 1024) {
+      pixelCounter = 0;
+    }
 }

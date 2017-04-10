@@ -90,6 +90,7 @@ int pixelCounter = 0;
 void setup() {
   initializePins();
   initializePanels();
+  redrawPanels();
   //setupTimer();
   //setupSerial();
 }

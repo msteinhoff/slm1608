@@ -82,6 +82,9 @@ byte framebuffer[] = {
 int rowOffset = 0;
 int panelOffset = 0;
 int colOffset = 0;
+int panel = 0;
+int row = 0;
+int col = 0;
 int pixelCounter = 0;
 
 //x |= (1 << n);       // forces nth bit of x to be 1.  all other bits left alone.
@@ -121,19 +124,17 @@ void setupSerial() {
 }
 
 void redrawPanels() {
-  // write each panel sequentially
-  for(int panel = 0; panel < PANELS; panel++) {
+  for(panel = 0; panel < PANELS; panel++) {
     redrawPanel(panel);
   }
 }
 
-
 void redrawPanel(int panel) {
   // panel select high
   PORTB |= (1<<panelSelectPin[panel]);
-  // pixel data
-  for(int row = 0; row < ROWS; row++) {  
-    for(int col = 0; col < COLS; col++) {
+
+  for(row = 0; row < ROWS; row++) {  
+    for(col = 0; col < COLS; col++) {
       rowOffset = row*(PANELS*COLS);
       panelOffset = panel*COLS;
       colOffset = rowOffset + panelOffset + col;

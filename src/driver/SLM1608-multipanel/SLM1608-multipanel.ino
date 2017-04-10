@@ -29,19 +29,19 @@
 // -----------------------------------------------------------------------------
 // PORTB: Select lines
 // Digital  8 = PORTB 0
-#define PIN_SELECT1 0
+// not used
 
 // Digital  9 = PORTB 1
-#define PIN_SELECT2 1
+#define PIN_SELECT1 1
 
 // Digital 10 = PORTB 2
-#define PIN_SELECT3 2
+#define PIN_SELECT2 2
 
 // Digital 11 = PORTB 3
-#define PIN_SELECT4 3
+#define PIN_SELECT3 3
 
 // Digital 12 = PORTB 4
-// not used
+#define PIN_SELECT4 4
 
 // Digital 13 = PORTB 5
 // not used

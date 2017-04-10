@@ -51,7 +51,7 @@
 #define COLS 16
 #define PANELS 4
 
-const int panelSelect[] = {
+const int panelSelectPin[] = {
   PIN_SELECT1,
   PIN_SELECT2,
   PIN_SELECT3,
@@ -119,38 +119,40 @@ void setupSerial() {
   Serial.begin(38400);
 }
 
-//TODO debug redrawPanels
-// IO pins auf high/low setyen und ueber oszi messen
 void redrawPanels() {
   // write each panel sequentially
-  for(int panel = 0; panel < PANELS-1; panel++) {
-    // panel select high
-    PORTB |= (1<<panelSelect[panel]);
-    
-    // pixel data
-    for(int col = 0; col < COLS-1; col++) {
-      for(int row = 0; row < ROWS-1; row++) {
-        rowOffset = row*(PANELS*COLS);
-        panelOffset = panel*COLS;
-        colOffset = rowOffset + panelOffset + col;
-
-        PORTD &= ~((1 << PIN_RED) | (1 << PIN_GREEN));
-        if(framebuffer[colOffset] & 0x01) {
-          PORTD |= (1<<PIN_GREEN);
-        }
-        if(framebuffer[colOffset] & 0x02) {
-          PORTD |= (1<<PIN_RED);
-        }
-
-        // clock high, then low
-        PORTD |= (1<<PIN_CLOCK);
-        PORTD &= ~(1<<PIN_CLOCK);
-      }
-    }
-
-    // panel select low
-    PORTB &= ~(1<<panelSelect[panel]);
+  for(int panel = 0; panel < PANELS; panel++) {
+    redrawPanel(panel);
   }
+}
+
+
+void redrawPanel(int panel) {
+  // panel select high
+  PORTB |= (1<<panelSelectPin[panel]);
+  // pixel data
+  for(int row = 0; row < ROWS; row++) {  
+    for(int col = 0; col < COLS; col++) {
+      rowOffset = row*(PANELS*COLS);
+      panelOffset = panel*COLS;
+      colOffset = rowOffset + panelOffset + col;
+
+      PORTD &= ~((1 << PIN_RED) | (1 << PIN_GREEN));
+      if(framebuffer[colOffset] & 0x01) {
+        PORTD |= (1<<PIN_GREEN);
+      }
+      if(framebuffer[colOffset] & 0x02) {
+        PORTD |= (1<<PIN_RED);
+      }
+
+      // clock high, then low
+      PORTD |= (1<<PIN_CLOCK);
+      PORTD &= ~(1<<PIN_CLOCK);
+    }
+  }
+
+  // panel select low
+  PORTB &= ~(1<<panelSelectPin[panel]);
 }
 
 void loop() {

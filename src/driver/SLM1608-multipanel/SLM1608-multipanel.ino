@@ -139,7 +139,6 @@ void redrawPanel(int panel) {
       panelOffset = panel*COLS;
       colOffset = rowOffset + panelOffset + col;
 
-      PORTD &= ~((1 << PIN_RED) | (1 << PIN_GREEN));
       if(framebuffer[colOffset] & 0x01) {
         PORTD |= (1<<PIN_GREEN);
       }
@@ -150,6 +149,9 @@ void redrawPanel(int panel) {
       // clock high, then low
       PORTD |= (1<<PIN_CLOCK);
       PORTD &= ~(1<<PIN_CLOCK);
+
+      // reset red and green data
+      PORTD &= ~((1 << PIN_RED) | (1 << PIN_GREEN));
     }
   }
 

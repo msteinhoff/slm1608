@@ -89,7 +89,6 @@ int pixelCounter = 0;
 
 void setup() {
   initializePins();
-  resetPins();
   initializePanels();
   //setupTimer();
   //setupSerial();
@@ -98,9 +97,6 @@ void setup() {
 void initializePins() {
   DDRD |= ((1<<PIN_RED) | (1<<PIN_GREEN) | (1<<PIN_CLOCK) | (1<<PIN_BRIGHT) | (1<<PIN_RESET));
   DDRB |= ((1<<PIN_SELECT1) | (1<<PIN_SELECT2) | (1<<PIN_SELECT3) | (1<<PIN_SELECT4));
-}
-
-void resetPins() {
   PORTD = B00000000;
   PORTB = B00000000;
 }

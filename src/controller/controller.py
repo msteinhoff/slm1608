@@ -1,6 +1,7 @@
 import sys
 import serial
 import time
+import random
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -25,8 +26,10 @@ if __name__ == "__main__":
         print ser.read(1024)
 
         print "Writing green pixels:"
-        for i in range(1024):
-            ser.write(b'g')
-            ser.flush()
-            time.sleep(0.01)
+        while True:
+            ser.write(b'i')
+            for i in range(1024):
+                ser.write(random.choice([b'o', b'r', b'g', b'y']))
+                ser.flush()
+                time.sleep(0.005)
         print "Done"

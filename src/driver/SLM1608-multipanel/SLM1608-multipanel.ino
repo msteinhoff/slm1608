@@ -1,5 +1,3 @@
-#include "TimerOne.h"
-
 // -----------------------------------------------------------------------------
 // PORTD: Data Bus
 // Digital  0 = PORTD 0
@@ -94,7 +92,6 @@ void setup() {
   initializePins();
   initializePanels();
   redrawPanels();
-  //setupTimer();
   setupSerial();
 }
 
@@ -110,12 +107,6 @@ void initializePanels() {
   PORTD |= ((1<<PIN_RESET) | (1<<PIN_BRIGHT));
   // reset and bright: low
   PORTD &= ~((1<<PIN_RESET) | (1<<PIN_BRIGHT));
-}
-
-void setupTimer() {
-  // 30fps
-  Timer1.initialize((1/30)*1000000);
-  Timer1.attachInterrupt(redrawPanels);
 }
 
 void setupSerial() {

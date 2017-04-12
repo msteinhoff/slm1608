@@ -7,22 +7,22 @@
 // reserved for serial
 
 // Digital  2 = PORTD 2
-#define PIN_RED 2
+#define PIN_RED (1<<2)
 
 // Digital  3 = PORTD 3
-#define PIN_GREEN 3
+#define PIN_GREEN (1<<3)
 
 // Digital  4 = PORTD 4
-#define PIN_BLUE 4
+#define PIN_BLUE (1<<4)
 
 // Digital  5 = PORTD 5
-#define PIN_CLOCK 5
+#define PIN_CLOCK (1<<5)
 
 // Digital  6 = PORTD 6
-#define PIN_BRIGHT 6
+#define PIN_BRIGHT (1<<6)
 
 // Digital  7 = PORTD 7
-#define PIN_RESET 7
+#define PIN_RESET (1<<7)
 
 // -----------------------------------------------------------------------------
 // PORTB: Select lines
@@ -30,22 +30,22 @@
 // not used
 
 // Digital  9 = PORTB 1
-#define PIN_SELECT1 1
+#define PIN_SELECT1 (1<<1)
 
 // Digital 10 = PORTB 2
-#define PIN_SELECT2 2
+#define PIN_SELECT2 (1<<2)
 
 // Digital 11 = PORTB 3
-#define PIN_SELECT3 3
+#define PIN_SELECT3 (1<<3)
 
 // Digital 12 = PORTB 4
-#define PIN_SELECT4 4
+#define PIN_SELECT4 (1<<4)
 
 // Digital 13 = PORTB 5
 // not used
 
 // -----------------------------------------------------------------------------
-#define ROWS 16 
+#define ROWS 16
 #define COLS 16
 #define PANELS 4
 
@@ -85,9 +85,6 @@ int row = 0;
 int col = 0;
 int pixelCounter = 0;
 
-//x |= (1 << n);       // forces nth bit of x to be 1.  all other bits left alone.
-//x &= ~(1 << n);      // forces nth bit of x to be 0.  all other bits left alone.
-
 void setup() {
   initializePins();
   initializePanels();
@@ -96,17 +93,15 @@ void setup() {
 }
 
 void initializePins() {
-  DDRD |= ((1<<PIN_RED) | (1<<PIN_GREEN) | (1<<PIN_CLOCK) | (1<<PIN_BRIGHT) | (1<<PIN_RESET));
-  DDRB |= ((1<<PIN_SELECT1) | (1<<PIN_SELECT2) | (1<<PIN_SELECT3) | (1<<PIN_SELECT4));
+  DDRD |= (PIN_RED | PIN_GREEN | PIN_CLOCK | PIN_BRIGHT | PIN_RESET);
+  DDRB |= (PIN_SELECT1 | PIN_SELECT2 | PIN_SELECT3 | PIN_SELECT4);
   PORTD = B00000000;
   PORTB = B00000000;
 }
 
 void initializePanels() {
-  // reset and bright: high
-  PORTD |= ((1<<PIN_RESET) | (1<<PIN_BRIGHT));
-  // reset and bright: low
-  PORTD &= ~((1<<PIN_RESET) | (1<<PIN_BRIGHT));
+  PORTD |= (PIN_RESET | PIN_BRIGHT);
+  PORTD &= ~(PIN_RESET | PIN_BRIGHT);
 }
 
 void setupSerial() {
@@ -121,8 +116,7 @@ void redrawPanels() {
 }
 
 void redrawPanel(int panel) {
-  // panel select high
-  PORTB |= (1<<panelSelectPin[panel]);
+  PORTB |= panelSelectPin[panel];
 
   for(row = 0; row < ROWS; row++) {  
     for(col = 0; col < COLS; col++) {
@@ -131,23 +125,19 @@ void redrawPanel(int panel) {
       colOffset = rowOffset + panelOffset + col;
 
       if(framebuffer[colOffset] & 0x01) {
-        PORTD |= (1<<PIN_GREEN);
+        PORTD |= PIN_GREEN;
       }
       if(framebuffer[colOffset] & 0x02) {
-        PORTD |= (1<<PIN_RED);
+        PORTD |= PIN_RED;
       }
 
-      // clock high, then low
-      PORTD |= (1<<PIN_CLOCK);
-      PORTD &= ~(1<<PIN_CLOCK);
-
-      // reset red and green data
-      PORTD &= ~((1 << PIN_RED) | (1 << PIN_GREEN));
+      PORTD |= PIN_CLOCK;
+      PORTD &= ~PIN_CLOCK;
+      PORTD &= ~(PIN_RED | PIN_GREEN);
     }
   }
 
-  // panel select low
-  PORTB &= ~(1<<panelSelectPin[panel]);
+  PORTB &= ~panelSelectPin[panel];
 }
 
 void loop() {

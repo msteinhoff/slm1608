@@ -83,6 +83,7 @@ int colOffset = 0;
 int panel = 0;
 int row = 0;
 int col = 0;
+byte datamask = B00000000;
 int pixelCounter = 0;
 
 void setup() {
@@ -109,36 +110,7 @@ void setupSerial() {
   Serial.println("Ready");
 }
 
-void redrawPanels() {
-  for(panel = 0; panel < PANELS; panel++) {
-    redrawPanel(panel);
-  }
-}
-
-void redrawPanel(int panel) {
-  PORTB |= panelSelectPin[panel];
-
-  for(row = 0; row < ROWS; row++) {  
-    for(col = 0; col < COLS; col++) {
-      rowOffset = row*(PANELS*COLS);
-      panelOffset = panel*COLS;
-      colOffset = rowOffset + panelOffset + col;
-
-      if(framebuffer[colOffset] & 0x01) {
-        PORTD |= PIN_GREEN;
-      }
-      if(framebuffer[colOffset] & 0x02) {
-        PORTD |= PIN_RED;
-      }
-
-      PORTD |= PIN_CLOCK;
-      PORTD &= ~PIN_CLOCK;
-      PORTD &= ~(PIN_RED | PIN_GREEN);
-    }
-  }
-
-  PORTB &= ~panelSelectPin[panel];
-}
+// TODO http://forum.arduino.cc/index.php?topic=396450
 
 void loop() {
   if(Serial.available()) {
@@ -184,4 +156,43 @@ void update(byte value) {
     if(pixelCounter >= 1024) {
       pixelCounter = 0;
     }
+}
+
+void redrawPanels() {
+  // we write panel by panel in the outer loop and set each panels select line
+  // to high while writing pixel data
+  for(panel = 0; panel < PANELS; panel++) {
+    PORTB |= panelSelectPin[panel];
+    // next, we write each panels's pixel data
+    // columns are written left to right
+    // rows are written written top to bottom
+    for(row = 0; row < ROWS; row++) {  
+      for(col = 0; col < COLS; col++) {
+        // we currently use a one-dimensional array to store the whole framebuffer
+        // to get an individual pixel we have to calculate the following offsets
+        rowOffset = row*(PANELS*COLS);
+        panelOffset = panel*COLS;
+        colOffset = rowOffset + panelOffset + col;
+        // to write a pixel, first the data lines must be set (red and/or green
+        // to high or low), then the clock must be set to high and again to low
+        // to move the pixel data into the panels shift register. finally, we 
+        // data lines are reset to low to avoid stale data.
+        // 
+        // to achieve consistent timing, the temporary variable datamask is used
+        // this way, PORTD is modified only once to write both values.
+        datamask = B00000000;
+        if(framebuffer[colOffset] & 0x01) {
+          datamask |= PIN_GREEN;
+        }
+        if(framebuffer[colOffset] & 0x02) {
+          datamask |= PIN_RED;
+        }
+        PORTD |= datamask;
+        PORTD |= PIN_CLOCK;
+        PORTD &= ~PIN_CLOCK;
+        PORTD &= ~(PIN_RED | PIN_GREEN);
+      }
+    }
+    PORTB &= ~panelSelectPin[panel];
+  }
 }

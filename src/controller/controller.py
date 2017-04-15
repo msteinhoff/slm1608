@@ -3,6 +3,99 @@ import serial
 import time
 import random
 
+def write_two_frames_in_loop(ser):
+    frames = [
+        [
+            b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55',     b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55', 
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55',     b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55',
+        ],
+        [
+            b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55',     b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55', 
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\xFF', b'\x00',    b'\x00', b'\xFF', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\xFF', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x40', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x00',     b'\x00', b'\x00', b'\x00', b'\x00',    b'\x00', b'\x00', b'\x00', b'\x01',
+            b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55',     b'\x55', b'\x55', b'\x55', b'\x55',    b'\x55', b'\x55', b'\x55', b'\x55'
+        ],
+    ]
+    while True:
+        for frame in frames:
+            write_frame(ser, frame)
+
+def write_sliding_strips(ser):
+    while True:
+        frame = [b'\x00'] * 256
+        x = 0
+        last_x = 0
+
+        while True:
+            if x > 15:
+                break
+
+            frame[x] = b'\xff'
+            frame[x+128] = b'\xff'
+            x += 2
+
+            write_frame(ser, frame)
+
+            if x > 0:
+                frame[last_x] = b'\x00'
+                frame[last_x+128] = b'\x00'
+                last_x = x
+            #time.sleep(0.05)
+
+def write_frame(ser, frame):
+    start1 = time.time()
+    send_with_ack(ser, "welcome marker", b'\x3C', "beg")
+
+    #print "Writing frame data"
+    start2 = time.time()
+    cnt = 0
+    for bt in frame:
+        ser.write(bt)
+        cnt += 1
+    end2 = time.time()
+
+    send_with_ack(ser, "end marker", b'\x3E', "end")
+    end1 = time.time()
+    print "Written frame data (%s bytes, frame in %s, data in %s)" %(cnt, end1-start1, end2-start2)
+
+def send_with_ack(ser, description, data, expected):
+    #print "Writing %s" % description
+    ser.write(data)
+    ack = ser.read(len(expected)+2) # +2 to account for \r\n
+    if ack.strip() == expected:
+        #print "Received %s ack" % description
+        pass
+    else:
+        if ack.strip() == 'eur':
+            print ser.read(6)
+        raise ValueError("Received no %s ack but: %s" % (description, ack.strip()))
+
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print "usage: controller.py [serialdevice]"
@@ -12,24 +105,17 @@ if __name__ == "__main__":
     baud = int(sys.argv[2])
     print "Connecting to %s with %s baud" % (port, baud)
 
-    with serial.Serial(port, baud , timeout=1, dsrdtr=True) as ser:
-        print "Connected to %s with %s baud" % (ser.port, ser.baudrate)
+
+
+    with serial.Serial(port, baud) as ser:
+    #with serial.Serial(port, baud , timeout=None, dsrdtr=False) as ser:
         print "Waiting for controller to initialize..."
-        time.sleep(2)
+        welcomemsg = ser.read(20) # expected: <Arduino is ready>\r\n
+        print "Received welcome message: %s" % (welcomemsg)
 
-        print "Reading welcome message:"
-        print ser.read(1024)
+        print "Writing pixel data..."
+        #write_two_frames_in_loop(ser)
+        write_sliding_strips(ser)
 
-        print "Resetting framebuffer:"
-        ser.write(b'i')
-        print "Result:"
-        print ser.read(1024)
-
-        print "Writing green pixels:"
-        while True:
-            ser.write(b'i')
-            for i in range(1024):
-                ser.write(random.choice([b'o', b'r', b'g', b'y']))
-                ser.flush()
-                time.sleep(0.005)
         print "Done"
+

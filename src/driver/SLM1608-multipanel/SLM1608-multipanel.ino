@@ -49,6 +49,12 @@
 #define COLS 16
 #define PANELS 4
 
+// -----------------------------------------------------------------------------
+#define RECV_BUFFER_SIZE 256+8
+#define START_MARKER 0x3C
+#define END_MARKER 0x3E
+#define FRAME_SIZE 256
+
 const int panelSelectPin[] = {
   PIN_SELECT1,
   PIN_SELECT2,
@@ -77,20 +83,17 @@ byte framebuffer[] = {
   0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01
 };
 
-int rowOffset = 0;
-int panelOffset = 0;
-int colOffset = 0;
-int panel = 0;
-int row = 0;
-int col = 0;
-byte datamask = B00000000;
-int pixelCounter = 0;
-
 void setup() {
   initializePins();
   initializePanels();
-  redrawPanels();
+  resetPanels();
   setupSerial();
+}
+
+void loop() {
+  recvBytes();
+  updateFramebuffer();
+  writePanels();
 }
 
 void initializePins() {
@@ -107,72 +110,120 @@ void initializePanels() {
 
 void setupSerial() {
   Serial.begin(115200);
-  Serial.println("Ready");
+  Serial.println("<Arduino is ready>");
 }
 
-// TODO http://forum.arduino.cc/index.php?topic=396450
-
-void loop() {
-  if(Serial.available()) {
-    updateFramebufferFromSerial();
+void resetPanels() {
+  static boolean isInitialized = false; 
+  if(isInitialized) {
+    return;
   }
-  redrawPanels();
-}
 
-void updateFramebufferFromSerial() {
-  char inByte = Serial.read();
-  switch(inByte) {
-    case 'i':
-      reset();
-      Serial.print("reset");
-      break;
-    case 'o':
-      update(0x00);
-      break;
-    case 'g':
-      update(0x01);
-      break;
-    case 'r':
-      update(0x02);
-      break;
-    case 'y':
-      update(0x03);
-      break;
-    default:
-      break;
-  }
-}
-
-void reset() {
-  pixelCounter = 0;
-  for(int i = 0; i < 1024; i++) {
-    framebuffer[i] = 0;
-  }
-}
-
-void update(byte value) {
-    framebuffer[pixelCounter] = value;
-    pixelCounter++;
-    if(pixelCounter >= 1024) {
-      pixelCounter = 0;
+  for(int panel = 0; panel < PANELS; panel++) {
+    PORTB |= panelSelectPin[panel];
+    for(int row = 0; row < ROWS; row++) {  
+      for(int col = 0; col < COLS; col++) {
+        PORTD = B00000000;
+        PORTD |= PIN_CLOCK;
+        PORTD &= ~PIN_CLOCK;
+      }
     }
+    PORTB &= ~panelSelectPin[panel];
+  }
+
+  isInitialized = true;
 }
 
-void redrawPanels() {
+byte receivedBytes[RECV_BUFFER_SIZE];
+boolean recvInProgress = false;
+boolean newData = false;
+
+void recvBytes() {
+  static int rbIdx = 0;
+  byte rb;
+  while(Serial.available() > 0 && newData == false) {
+    rb = Serial.read();
+    if(!recvInProgress) {
+      // ignore all data until start marker is sent
+      if(rb == START_MARKER) {
+        recvInProgress = true;
+        Serial.println("beg");
+      } else {
+        Serial.println("unk");
+      }
+    } else {
+      if(rb != END_MARKER) {
+        // regular data flow
+        if(rbIdx < FRAME_SIZE) {
+          receivedBytes[rbIdx] = rb;
+          rbIdx++;
+        } else {
+          // frame received but no expected end marker sent
+          recvInProgress = false;
+          rbIdx = 0;
+          Serial.println("eof");
+        }
+      } else {
+        // at this point the controller has sent everything
+        if(rbIdx == FRAME_SIZE) {
+          newData = true;
+          Serial.println("end");
+        } else {
+          // end marker received but the frame is incomplete
+          Serial.println("eur");
+          if (rbIdx<1000) Serial.print('0');
+          if (rbIdx<100) Serial.print('0');
+          if (rbIdx<10) Serial.print('0');
+          Serial.println(rbIdx);
+        }
+        recvInProgress = false;
+        rbIdx = 0;
+      }
+    }
+  }
+}
+
+void updateFramebuffer() {
+  if(!newData) {
+    return;
+  }
+  
+  byte rb;
+  for(int i = 0, fbidx = 0; i < FRAME_SIZE; i++) {
+    rb = receivedBytes[i];
+    framebuffer[fbidx] = 0x03 & (rb>>6);
+    fbidx++;
+    framebuffer[fbidx] = 0x03 & (rb>>4);
+    fbidx++;
+    framebuffer[fbidx] = 0x03 & (rb>>2);
+    fbidx++;
+    framebuffer[fbidx] = 0x03 & (rb>>0);
+    fbidx++;
+  }
+    
+  // reset receive buffer
+  for(int i = 0; i < RECV_BUFFER_SIZE; i++) {
+    receivedBytes[i] = 0;
+  }
+
+  newData = false;
+}
+
+void writePanels() {
   // we write panel by panel in the outer loop and set each panels select line
   // to high while writing pixel data
-  for(panel = 0; panel < PANELS; panel++) {
+  for(int panel = 0; panel < PANELS; panel++) {
     PORTB |= panelSelectPin[panel];
     // next, we write each panels's pixel data
     // columns are written left to right
     // rows are written written top to bottom
-    for(row = 0; row < ROWS; row++) {  
-      for(col = 0; col < COLS; col++) {
+    for(int row = 0; row < ROWS; row++) {  
+      for(int col = 0; col < COLS; col++) {
         // we currently use a one-dimensional array to store the whole framebuffer
         // to get an individual pixel we have to calculate the following offsets
-        rowOffset = row*(PANELS*COLS);
-        panelOffset = panel*COLS;
-        colOffset = rowOffset + panelOffset + col;
+        int rowOffset = row*(PANELS*COLS);
+        int panelOffset = panel*COLS;
+        int colOffset = rowOffset + panelOffset + col;
         // to write a pixel, first the data lines must be set (red and/or green
         // to high or low), then the clock must be set to high and again to low
         // to move the pixel data into the panels shift register. finally, we 
@@ -180,7 +231,7 @@ void redrawPanels() {
         // 
         // to achieve consistent timing, the temporary variable datamask is used
         // this way, PORTD is modified only once to write both values.
-        datamask = B00000000;
+        byte datamask = B00000000;
         if(framebuffer[colOffset] & 0x01) {
           datamask |= PIN_GREEN;
         }
@@ -196,3 +247,4 @@ void redrawPanels() {
     PORTB &= ~panelSelectPin[panel];
   }
 }
+

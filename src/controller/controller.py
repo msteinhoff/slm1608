@@ -3,6 +3,24 @@ import serial
 import time
 import random
 
+def connect_and_send(port, baud, pixel_generator):
+    print "Connecting to %s with %s baud" % (port, baud)
+
+    try:
+        with serial.Serial(port, baud) as ser:
+            print "Waiting for controller to initialize..."
+            welcomemsg = ser.read(20) # expected: <Arduino is ready>\r\n
+            print "Received welcome message: %s" % (welcomemsg)
+
+            print "Writing pixel data..."
+            #write_two_frames_in_loop(ser)
+            pixel_generator(ser)
+
+    except KeyboardInterrupt:
+        pass
+    
+    print "Done"
+
 def write_two_frames_in_loop(ser):
     frames = [
         [
@@ -113,19 +131,5 @@ if __name__ == "__main__":
 
     port = sys.argv[1]
     baud = int(sys.argv[2])
-    print "Connecting to %s with %s baud" % (port, baud)
 
-
-
-    with serial.Serial(port, baud) as ser:
-    #with serial.Serial(port, baud , timeout=None, dsrdtr=False) as ser:
-        print "Waiting for controller to initialize..."
-        welcomemsg = ser.read(20) # expected: <Arduino is ready>\r\n
-        print "Received welcome message: %s" % (welcomemsg)
-
-        print "Writing pixel data..."
-        #write_two_frames_in_loop(ser)
-        write_sliding_strips(ser)
-
-        print "Done"
-
+    connect_and_send(port, baud, write_sliding_strips)

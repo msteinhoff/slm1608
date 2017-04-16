@@ -58,7 +58,7 @@ def write_sliding_strips(ser):
 
             frame[x] = b'\xff'
             frame[x+128] = b'\xff'
-            x += 2
+            x += 1
 
             write_frame(ser, frame)
 

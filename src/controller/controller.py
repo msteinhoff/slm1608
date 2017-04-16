@@ -69,32 +69,42 @@ def write_sliding_strips(ser):
             #time.sleep(0.05)
 
 def write_frame(ser, frame):
-    start1 = time.time()
-    send_with_ack(ser, "welcome marker", b'\x3C', "beg")
+    #send_with_ack(ser, b'\x3C', "beg")
+    send(b'\x3C')
 
-    #print "Writing frame data"
+    for bt in frame:
+        send(ser, bt)
+
+    #send_with_ack(ser, b'\x3E', "end")
+    send(ser, b'\x3E')
+
+def write_frame_timed(ser, frame):
+    start1 = time.time()
+    #send_with_ack(ser, b'\x3C', "beg")
+    send(b'\x3C')
+
     start2 = time.time()
     cnt = 0
     for bt in frame:
-        ser.write(bt)
+        send(ser, bt)
         cnt += 1
     end2 = time.time()
 
-    send_with_ack(ser, "end marker", b'\x3E', "end")
+    #send_with_ack(ser, b'\x3E', "end")
+    send(ser, b'\x3E')
     end1 = time.time()
     print "Written frame data (%s bytes, frame in %s, data in %s)" %(cnt, end1-start1, end2-start2)
 
-def send_with_ack(ser, description, data, expected):
-    #print "Writing %s" % description
+def send(ser, data):
+    ser.write(data)
+
+def send_with_ack(ser, data, expected):
     ser.write(data)
     ack = ser.read(len(expected)+2) # +2 to account for \r\n
-    if ack.strip() == expected:
-        #print "Received %s ack" % description
-        pass
-    else:
+    if ack.strip() != expected:
         if ack.strip() == 'eur':
-            print ser.read(6)
-        raise ValueError("Received no %s ack but: %s" % (description, ack.strip()))
+            print "error-underrun: received %s bytes" % ser.read(6)
+        raise ValueError("Expected %s ack but got %s" % (expected, ack.strip()))
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

@@ -146,7 +146,7 @@ void recvBytes() {
       // ignore all data until start marker is sent
       if(rb == START_MARKER) {
         recvInProgress = true;
-        Serial.println("beg");
+        //Serial.println("beg");
       } else {
         Serial.println("unk");
       }
@@ -166,7 +166,7 @@ void recvBytes() {
         // at this point the controller has sent everything
         if(rbIdx == FRAME_SIZE) {
           newData = true;
-          Serial.println("end");
+          //Serial.println("end");
         } else {
           // end marker received but the frame is incomplete
           Serial.println("eur");

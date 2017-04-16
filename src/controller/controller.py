@@ -65,6 +65,8 @@ def write_two_frames_in_loop(ser):
             write_frame(ser, frame)
 
 def write_sliding_strips(ser):
+    start = time.time()
+    count = 0
     while True:
         frame = [b'\x00'] * 256
         x = 0
@@ -77,6 +79,7 @@ def write_sliding_strips(ser):
             frame[x] = b'\xff'
             frame[x+128] = b'\xff'
             x += 1
+            count += 1
 
             write_frame(ser, frame)
 
@@ -85,10 +88,13 @@ def write_sliding_strips(ser):
                 frame[last_x+128] = b'\x00'
                 last_x = x
             #time.sleep(0.05)
+        if count % 16 == 0:
+            end = time.time()
+            print "Written %s frames with %s fps" % (count, count/(end-start))
 
 def write_frame(ser, frame):
     #send_with_ack(ser, b'\x3C', "beg")
-    send(b'\x3C')
+    send(ser, b'\x3C')
 
     for bt in frame:
         send(ser, bt)
@@ -99,7 +105,7 @@ def write_frame(ser, frame):
 def write_frame_timed(ser, frame):
     start1 = time.time()
     #send_with_ack(ser, b'\x3C', "beg")
-    send(b'\x3C')
+    send(ser, b'\x3C')
 
     start2 = time.time()
     cnt = 0

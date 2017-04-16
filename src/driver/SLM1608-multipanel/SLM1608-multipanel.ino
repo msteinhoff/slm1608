@@ -50,10 +50,9 @@
 #define PANELS 4
 
 // -----------------------------------------------------------------------------
-#define RECV_BUFFER_SIZE 256+8
+#define FRAME_SIZE 256
 #define START_MARKER 0x3C
 #define END_MARKER 0x3E
-#define FRAME_SIZE 256
 
 const int panelSelectPin[] = {
   PIN_SELECT1,
@@ -134,7 +133,7 @@ void resetPanels() {
   isInitialized = true;
 }
 
-byte receivedBytes[RECV_BUFFER_SIZE];
+byte receivedBytes[FRAME_SIZE];
 boolean recvInProgress = false;
 boolean newData = false;
 
@@ -187,22 +186,16 @@ void updateFramebuffer() {
   if(!newData) {
     return;
   }
-  
-  byte rb;
+
   for(int i = 0, fbidx = 0; i < FRAME_SIZE; i++) {
-    rb = receivedBytes[i];
-    framebuffer[fbidx] = 0x03 & (rb>>6);
+    framebuffer[fbidx] = 0x03 & (receivedBytes[i]>>6);
     fbidx++;
-    framebuffer[fbidx] = 0x03 & (rb>>4);
+    framebuffer[fbidx] = 0x03 & (receivedBytes[i]>>4);
     fbidx++;
-    framebuffer[fbidx] = 0x03 & (rb>>2);
+    framebuffer[fbidx] = 0x03 & (receivedBytes[i]>>2);
     fbidx++;
-    framebuffer[fbidx] = 0x03 & (rb>>0);
+    framebuffer[fbidx] = 0x03 & (receivedBytes[i]>>0);
     fbidx++;
-  }
-    
-  // reset receive buffer
-  for(int i = 0; i < RECV_BUFFER_SIZE; i++) {
     receivedBytes[i] = 0;
   }
 

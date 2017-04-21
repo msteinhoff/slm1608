@@ -12,6 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("port", help="The serial device to use")
     parser.add_argument("--baud", type=int, default=115200, help="The symbol rate to use")
+    parser.add_argument("--fps", type=int, default=15, help="How many frames per second to send")
     parser.add_argument("--loop", action="store_true", help="If the frames should be looped infinitely")
     subparsers = parser.add_subparsers(dest="pixelgenerator")
     generators.staticframes.create_argparser(subparsers)
@@ -36,9 +37,9 @@ if __name__ == "__main__":
     drv = driver.LEDMatrixDriver()
     try:
         drv.connect(args.port, args.baud)
-        if not args.loop:
-            write_frames_once(drv, frames)
+        if args.loop:
+            animation.write_frames_looped(drv, frames, args.fps)
         else:
-            write_frames_looped(drv, frames)            
+            animation.write_frames_once(drv, frames, args.fps)
     finally:
         drv.disconnect()

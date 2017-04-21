@@ -4,7 +4,7 @@ from PIL import Image
 
 logger = logging.getLogger("gif")
 
-def create_argparser(sub_parser):
+def create_argparser(subparsers):
     gif_parser = subparsers.add_parser('gif')
     gif_parser.add_argument('filename')
 

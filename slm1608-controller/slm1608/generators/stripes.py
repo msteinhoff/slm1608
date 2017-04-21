@@ -2,7 +2,7 @@ import logging
 
 logger = logging.getLogger("stripes")
 
-def create_argparser(sub_parser):
+def create_argparser(subparsers):
     gif_parser = subparsers.add_parser('stripes')
 
 def create_frames_from_args(args):

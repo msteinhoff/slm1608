@@ -1,5 +1,16 @@
 import struct
+import logging
 from PIL import Image
+
+logger = logging.getLogger("gif")
+
+def create_argparser(sub_parser):
+    gif_parser = subparsers.add_parser('gif')
+    gif_parser.add_argument('filename')
+
+def create_frames_from_args(args):
+    frames = create_frames(args.filename)
+    logger.info("Loaded %s frames from gif '%s'", len(frames), args.filename)
 
 def create_frames(filename):
     with Image.open(filename) as im:

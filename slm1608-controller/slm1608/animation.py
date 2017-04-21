@@ -1,7 +1,7 @@
-import logging
 import time
+import logging
 
-logger = logging.getLogger('animation')
+logger = logging.getLogger("animation")
 
 def write_frames_once(driver, frames):
     logger.info("Writing animation with %s frames to display driver (press ctrl+c to abort)", len(frames))

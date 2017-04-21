@@ -7,7 +7,6 @@ import animation
 import generators
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-logger = logging.getLogger('controller')
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -15,22 +14,18 @@ def parse_args():
     parser.add_argument("--baud", type=int, default=115200, help="The symbol rate to use")
     parser.add_argument("--loop", action="store_true", help="If the frames should be looped infinitely")
     subparsers = parser.add_subparsers(dest="pixelgenerator")
-    staticframes_parser = subparsers.add_parser('staticframes')
-    stripes_parser = subparsers.add_parser('stripes')
-    gif_parser = subparsers.add_parser('gif')
-    gif_parser.add_argument('filename')
+    generators.staticframes.create_argparser(subparsers)
+    generators.stripes.create_argparser(subparsers)
+    generators.gif.create_argparser(subparsers)
     return parser.parse_args()
 
 def build_frames(args):
     if args.pixelgenerator == 'staticframes':
-        frames = generators.staticframes.create_frames()
-        logger.info("Loaded %s static frames", len(frames))
+        frames = generators.staticframes.create_frames_from_args(args)
     elif args.pixelgenerator == 'stripes':
-        frames = generators.stripes.create_frames()
-        logger.info("Loaded %s frames for stripe animation", len(frames))
+        frames = generators.stripes.create_frames_from_args(args)
     elif args.pixelgenerator == 'gif':
-        frames = generators.gif.create_frames(args.filename)
-        logger.info("Loaded %s frames from gif '%s'", len(frames), args.filename)
+        frames = generators.gif.create_frames_from_args(args)
     else:
         raise ValueError("unknown pixel generator %s", args.pixelgenerator)
     return frames
